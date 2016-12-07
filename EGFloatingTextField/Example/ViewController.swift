@@ -19,6 +19,8 @@ class ViewController: UIViewController {
         emailLabel.setPlaceHolder("Email")
         emailLabel.validationType = .email
         emailLabel.keyboardType = .emailAddress
+        emailLabel.rtl = true
+        emailLabel.isLargeFloatingLabelSize = true
         self.view.addSubview(emailLabel)
         
         let passwordLabel = EGFloatingTextField(frame: CGRect(x: 8, y: 128, width: (self.view.bounds).width - 16, height: 48))

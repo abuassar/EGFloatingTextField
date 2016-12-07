@@ -34,7 +34,16 @@ open class EGFloatingTextField: UITextField {
     let kDefaultLabelTextColor = UIColor(white: CGFloat(0), alpha: CGFloat(0.54))
     
     
-    open var floatingLabel : Bool!
+    public var rtl : Bool = false {
+        didSet{
+            self.label.textAlignment = rtl ? .right : .left
+            self.textAlignment = rtl ? .right : .left
+        }
+    }
+    
+    public var isLargeFloatingLabelSize : Bool = false
+    public var floatingLabel : Bool!
+    
     var label : UILabel!
     var labelFont : UIFont!
     var labelTextColor : UIColor!
@@ -43,7 +52,6 @@ open class EGFloatingTextField: UITextField {
     var active : Bool!
     var hasError : Bool!
     var errorMessage : String!
-    
     
     
     required public init?(coder aDecoder: NSCoder) {
@@ -81,6 +89,7 @@ open class EGFloatingTextField: UITextField {
             return isValid;
             
         })
+        
         self.floating = false
         self.hasError = false
         
@@ -88,9 +97,10 @@ open class EGFloatingTextField: UITextField {
         self.label = UILabel(frame: CGRect.zero)
         self.label.font = self.labelFont
         self.label.textColor = self.labelTextColor
-        self.label.textAlignment = NSTextAlignment.left
+        self.label.textAlignment = .left
         self.label.numberOfLines = 1
         self.label.layer.masksToBounds = false
+        //self.label.backgroundColor = UIColor.red
         self.addSubview(self.label)
         
         
@@ -109,7 +119,11 @@ open class EGFloatingTextField: UITextField {
         self.activeBorder.autoPinEdge(ALEdge.right, to: ALEdge.right, of: self)
         self.activeBorder.autoSetDimension(ALDimension.height, toSize: 2)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(UITextInputDelegate.textDidChange(_:)), name: NSNotification.Name(rawValue: "UITextFieldTextDidChangeNotification"), object: self)
+        self.rtl = false
+        self.isLargeFloatingLabelSize = false
+        //self.backgroundColor = UIColor.yellow
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(UITextInputDelegate.textDidChange(_:)), name: .UITextFieldTextDidChange, object: self)
     }
     open func setPlaceHolder(_ placeholder:String){
         self.label.text = placeholder
@@ -199,16 +213,19 @@ open class EGFloatingTextField: UITextField {
     }
     
     func floatLabelToTop() {
-        
         CATransaction.begin()
         CATransaction.setCompletionBlock { () -> Void in
             self.label.textColor = self.kDefaultActiveColor
         }
         
+        let floatingLabelScale : CGFloat = isLargeFloatingLabelSize ? 1.0 : 0.75
+        let floatingLabelTranslateX : CGFloat = ((self.label.frame.width * (1-floatingLabelScale)) / (2 * floatingLabelScale)) * (rtl ? 1 : -1)
+        let floatingLabelTranslateY : CGFloat = -self.label.frame.height / (2*floatingLabelScale)
+        
         let anim2 = CABasicAnimation(keyPath: "transform")
-        let fromTransform = CATransform3DMakeScale(CGFloat(1.0), CGFloat(1.0), CGFloat(1))
-        var toTransform = CATransform3DMakeScale(CGFloat(0.5), CGFloat(0.5), CGFloat(1))
-        toTransform = CATransform3DTranslate(toTransform, -self.label.frame.width/2, -self.label.frame.height, 0)
+        let fromTransform = CATransform3DMakeScale(1.0, 1.0, 1.0)
+        var toTransform = CATransform3DMakeScale(floatingLabelScale, floatingLabelScale, 1.0)
+        toTransform = CATransform3DTranslate(toTransform, floatingLabelTranslateX, floatingLabelTranslateY, 0)
         anim2.fromValue = NSValue(caTransform3D: fromTransform)
         anim2.toValue = NSValue(caTransform3D: toTransform)
         anim2.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseOut)
@@ -245,9 +262,13 @@ open class EGFloatingTextField: UITextField {
             self.label.textColor = self.kDefaultInactiveColor
         }
         
+        let floatingLabelScale : CGFloat = isLargeFloatingLabelSize ? 1.0 : 0.75
+        let floatingLabelTranslateX : CGFloat = ((self.label.frame.width * (1-floatingLabelScale)) / (2 * floatingLabelScale)) * (rtl ? 1 : -1)
+        let floatingLabelTranslateY : CGFloat = -self.label.frame.height / (2*floatingLabelScale)
+        
         let anim2 = CABasicAnimation(keyPath: "transform")
-        var fromTransform = CATransform3DMakeScale(0.5, 0.5, 1)
-        fromTransform = CATransform3DTranslate(fromTransform, -self.label.frame.width/2, -self.label.frame.height, 0);
+        var fromTransform = CATransform3DMakeScale(floatingLabelScale, floatingLabelScale, 1)
+        fromTransform = CATransform3DTranslate(fromTransform, floatingLabelTranslateX, floatingLabelTranslateY, 1.0);
         let toTransform = CATransform3DMakeScale(1.0, 1.0, 1)
         anim2.fromValue = NSValue(caTransform3D: fromTransform)
         anim2.toValue = NSValue(caTransform3D: toTransform)
